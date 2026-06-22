@@ -73,29 +73,47 @@ class SetoranController extends Controller
         return view('dashboard.setoran', compact('daftarPengepul'));
     }
 
+
+
     /**
-     * [CREATE - PROCESS] Menyimpan Pengajuan Setoran Baru
-     */
-    public function storeMasyarakat(Request $request)
-    {
-        $request->validate([
-            'pengepul_id' => 'required|exists:users,id',
-            'liter_estimasi' => 'required|numeric|min:1',
-            'tanggal_penjemputan' => 'required|date|after_or_equal:today',
-        ]);
+ * [READ - PENGEPUL] Menampilkan Antrean Setoran dari Masyarakat
+ */
+public function indexPengepul()
+{
+    // 1. Hitung total stok dari setoran yang sudah tervalidasi ('selesai')
+    $totalStok = Setoran::where('pengepul_id', Auth::id())
+                        ->where('status', 'selesai')
+                        ->sum('liter_bersih');
 
-        Setoran::create([
-            'masyarakat_id' => Auth::id(),
-            'pengepul_id' => $request->pengepul_id,
-            'liter_estimasi' => $request->liter_estimasi,
-            'tanggal_penjemputan' => $request->tanggal_penjemputan,
-            'status' => 'pending',
-        ]);
+    // 2. Ambil daftar antrean milik pengepul ini yang statusnya masih 'pending'
+    $antreanSetoran = Setoran::with('masyarakat')
+                        ->where('pengepul_id', Auth::id())
+                        ->where('status', 'pending')
+                        ->orderBy('created_at', 'asc')
+                        ->get();
 
-        // Redirect langsung ke rute riwayat agar user melihat log pengajuannya
-        return redirect()->route('masyarakat.riwayat')->with('success', 'Pengajuan setoran berhasil dikirim!');
-    }
+    return view('pengepul.setoran.index', compact('totalStok', 'antreanSetoran'));
+}
+public function storeMasyarakat(Request $request)
+{
+    $request->validate([
+        'pengepul_id'         => 'required|exists:users,id',
+        'liter_estimasi'      => 'required|numeric|min:1',
+        'tanggal_penjemputan' => 'required|date|after_or_equal:today',
+        'jam_penjemputan'     => 'required|date_format:H:i', // Tambahkan validasi jam
+    ]);
 
+    Setoran::create([
+        'masyarakat_id'       => Auth::id(),
+        'pengepul_id'         => $request->pengepul_id,
+        'liter_estimasi'      => $request->liter_estimasi,
+        'tanggal_penjemputan' => $request->tanggal_penjemputan,
+        'jam_penjemputan'     => $request->jam_penjemputan, // Tambahkan field ini
+        'status'              => 'pending',
+    ]);
+
+    return redirect()->route('masyarakat.riwayat')->with('success', 'Pengajuan setoran berhasil dikirim!');
+}
     /**
      * [UPDATE] Menampilkan Halaman Edit Setoran
      */
@@ -116,27 +134,29 @@ class SetoranController extends Controller
      * [UPDATE - PROCESS] Memperbarui Data Setoran di Database
      */
     public function updateMasyarakat(Request $request, $id)
-    {
-        $setoran = Setoran::where('masyarakat_id', Auth::id())->findOrFail($id);
+{
+    $setoran = Setoran::where('masyarakat_id', Auth::id())->findOrFail($id);
 
-        if ($setoran->status !== 'pending') {
-            return redirect()->route('masyarakat.riwayat')->with('error', 'Pengajuan tidak dapat diubah karena sedang/sudah diproses.');
-        }
-
-        $request->validate([
-            'pengepul_id' => 'required|exists:users,id',
-            'liter_estimasi' => 'required|numeric|min:1',
-            'tanggal_penjemputan' => 'required|date|after_or_equal:today',
-        ]);
-
-        $setoran->update([
-            'pengepul_id' => $request->pengepul_id,
-            'liter_estimasi' => $request->liter_estimasi,
-            'tanggal_penjemputan' => $request->tanggal_penjemputan,
-        ]);
-
-        return redirect()->route('masyarakat.riwayat')->with('success', 'Pengajuan setoran berhasil diperbarui!');
+    if ($setoran->status !== 'pending') {
+        return redirect()->route('masyarakat.riwayat')->with('error', 'Pengajuan tidak dapat diubah karena sedang/sudah diproses.');
     }
+
+    $request->validate([
+        'pengepul_id'         => 'required|exists:users,id',
+        'liter_estimasi'      => 'required|numeric|min:1',
+        'tanggal_penjemputan' => 'required|date|after_or_equal:today',
+        'jam_penjemputan'     => 'required|date_format:H:i', // Tambahkan validasi jam
+    ]);
+
+    $setoran->update([
+        'pengepul_id'         => $request->pengepul_id,
+        'liter_estimasi'      => $request->liter_estimasi,
+        'tanggal_penjemputan' => $request->tanggal_penjemputan,
+        'jam_penjemputan'     => $request->jam_penjemputan, // Tambahkan field ini
+    ]);
+
+    return redirect()->route('masyarakat.riwayat')->with('success', 'Pengajuan setoran berhasil diperbarui!');
+}
 
     /**
      * [DELETE] Membatalkan/Menghapus Pengajuan Setoran

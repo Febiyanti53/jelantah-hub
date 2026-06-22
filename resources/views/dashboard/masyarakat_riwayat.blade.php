@@ -5,6 +5,31 @@
         </h2>
     </x-slot>
 
+
+    @if (session('success'))
+    <div class="mb-5 p-4 rounded-2xl bg-emerald-100 text-emerald-800 border border-emerald-200 flex items-center justify-between shadow-sm">
+        <div class="flex items-center gap-3">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            <span class="text-sm font-semibold">{{ session('success') }}</span>
+        </div>
+        <button onclick="this.parentElement.remove()" class="text-emerald-600 hover:text-emerald-900">
+            &times;
+        </button>
+    </div>
+@endif
+
+@if (session('error'))
+    <div class="mb-5 p-4 rounded-2xl bg-red-100 text-red-800 border border-red-200 flex items-center justify-between shadow-sm">
+        <div class="flex items-center gap-3">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            <span class="text-sm font-semibold">{{ session('error') }}</span>
+        </div>
+        <button onclick="this.parentElement.remove()" class="text-red-600 hover:text-red-900">
+            &times;
+        </button>
+    </div>
+@endif
+
     <div class="mb-8 p-6 bg-gradient-to-r from-emerald-600 to-teal-700 rounded-3xl text-white shadow-xl shadow-emerald-100 relative overflow-hidden">
         <div class="absolute right-0 top-0 translate-x-4 -translate-y-4 opacity-10">
             <svg class="w-64 h-64" fill="currentColor" viewBox="0 0 24 24">
@@ -28,8 +53,11 @@
                 </svg>
             </div>
             <div>
-                <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Total Kontribusi</p>
-                <h3 class="text-2xl font-extrabold text-slate-800 mt-0.5">45.5 <span class="text-sm font-medium text-slate-500">Liter</span></h3>
+                <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Total Kontribusi (Selesai)</p>
+                <h3 class="text-2xl font-extrabold text-slate-800 mt-0.5">
+                    {{ number_format($riwayatSetoran->where('status', 'selesai')->sum('liter_bersih'), 1, ',', '.') }}
+                    <span class="text-sm font-medium text-slate-500">Liter</span>
+                </h3>
             </div>
         </div>
 
@@ -40,8 +68,11 @@
                 </svg>
             </div>
             <div>
-                <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Total Pendapatan</p>
-                <h3 class="text-2xl font-extrabold text-slate-800 mt-0.5"><span class="text-sm font-semibold text-slate-500">Rp</span> 364,000</h3>
+                <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Total Insentif Diterima</p>
+                <h3 class="text-2xl font-extrabold text-slate-800 mt-0.5">
+                    <span class="text-sm font-semibold text-slate-500">Rp</span> 
+                    {{ number_format($riwayatSetoran->where('status', 'selesai')->sum('harga_dibayar'), 0, ',', '.') }}
+                </h3>
             </div>
         </div>
 
@@ -54,9 +85,19 @@
             <div>
                 <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Setoran Terakhir</p>
                 <div class="flex items-center gap-2 mt-1">
-                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
-                        Sedang Dijemput
-                    </span>
+                    @if($riwayatSetoran->first())
+                        @if($riwayatSetoran->first()->status === 'pending')
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800 uppercase tracking-wide text-[10px]">
+                                Menunggu Validasi Pengepul
+                            </span>
+                        @else
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800 uppercase tracking-wide text-[10px]">
+                                Selesai Diproses
+                            </span>
+                        @endif
+                    @else
+                        <span class="text-xs text-slate-400 italic">Belum ada aktivitas</span>
+                    @endif
                 </div>
             </div>
         </div>
@@ -69,48 +110,73 @@
                 <h3 class="text-base font-bold text-slate-900">Log Riwayat Pengiriman</h3>
                 <p class="text-xs text-slate-500 mt-0.5">Daftar transaksi setoran jelantah Anda ke mitra pengepul.</p>
             </div>
-            <button class="inline-flex items-center gap-2 px-4 py-2 text-xs font-bold text-white bg-slate-900 hover:bg-slate-800 rounded-xl transition-all shadow-sm">
+            <a href="{{ route('masyarakat.pengepul.terdekat') }}" class="inline-flex items-center gap-2 px-4 py-2 text-xs font-bold text-white bg-slate-900 hover:bg-slate-800 rounded-xl transition-all shadow-sm">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
                 </svg>
                 Setor Minyak Sekarang
-            </button>
+            </a>
         </div>
         
         <div class="overflow-x-auto w-full">
             <table class="w-full text-left border-collapse">
                 <thead>
                     <tr class="bg-slate-50 text-slate-500 text-[11px] font-bold uppercase tracking-wider border-b border-slate-100">
-                        <th class="py-3 px-6">Tanggal</th>
+                        <th class="py-3 px-6">Tanggal Penjemputan</th>
                         <th class="py-3 px-6">Tujuan Pengepul</th>
-                        <th class="py-3 px-6 text-right">Volume (Gross)</th>
-                        <th class="py-3 px-6 text-right">Insentif</th>
+                        <th class="py-3 px-6 text-right">Volume Klaim / Bersih</th>
+                        <th class="py-3 px-6 text-right">Insentif Estimasi / Aktual</th>
                         <th class="py-3 px-6 text-center">Status Alur</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100 text-sm text-slate-700">
-                    <tr class="hover:bg-slate-50/80 transition-colors">
-                        <td class="py-4 px-6 font-medium text-slate-900">22 Juni 2026</td>
-                        <td class="py-4 px-6">Mitra Pengepul Solo Hub</td>
-                        <td class="py-4 px-6 text-right font-semibold">12.0 Liter</td>
-                        <td class="py-4 px-6 text-right font-bold text-emerald-600">Rp 96,000</td>
-                        <td class="py-4 px-6 text-center">
-                            <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-800">
-                                Pending
-                            </span>
-                        </td>
-                    </tr>
-                    <tr class="hover:bg-slate-50/80 transition-colors">
-                        <td class="py-4 px-6 font-medium text-slate-900">15 Juni 2026</td>
-                        <td class="py-4 px-6">Mitra Pengepul Solo Hub</td>
-                        <td class="py-4 px-6 text-right font-semibold">33.5 Liter</td>
-                        <td class="py-4 px-6 text-right font-bold text-emerald-600">Rp 268,000</td>
-                        <td class="py-4 px-6 text-center">
-                            <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800">
-                                Berhasil Cair
-                            </span>
-                        </td>
-                    </tr>
+                    @forelse($riwayatSetoran as $setoran)
+                        <tr class="hover:bg-slate-50/80 transition-colors">
+                            <td class="py-4 px-6 font-medium text-slate-900">
+                                {{ $setoran->tanggal_penjemputan ? $setoran->tanggal_penjemputan->translatedFormat('d F Y') : '-' }}
+                                <span class="block text-[11px] text-slate-400 font-normal mt-0.5">Jam Pengajuan: {{ $setoran->jam_penjemputan ?? '--:--' }}</span>
+                            </td>
+                            <td class="py-4 px-6">
+                                <div class="font-semibold text-slate-800">{{ $setoran->pengepul->name ?? 'Hub Tidak Ditemukan' }}</div>
+                                <div class="text-xs text-slate-400 mt-0.5">{{ $setoran->pengepul->alamat ?? '-' }}</div>
+                            </td>
+                            <td class="py-4 px-6 text-right">
+                                @if($setoran->status === 'pending')
+                                    <span class="font-semibold text-slate-700">{{ number_format($setoran->liter_estimasi, 1, ',', '.') }} L</span>
+                                    <span class="block text-[10px] text-slate-400">(Klaim Warga)</span>
+                                @else
+                                    <span class="font-bold text-slate-900">{{ number_format($setoran->liter_clean ?? $setoran->liter_bersih, 1, ',', '.') }} L</span>
+                                    <span class="block text-[10px] text-emerald-600 font-medium">(Bersih Riil, Endapan: {{ $setoran->endapan }}L)</span>
+                                @endif
+                            </td>
+                            <td class="py-4 px-6 text-right">
+                                @if($setoran->status === 'pending')
+                                    <span class="font-semibold text-slate-500">Rp {{ number_format($setoran->liter_estimasi * ($setoran->pengepul->harga_per_liter ?? 10000), 0, ',', '.') }}</span>
+                                    <span class="block text-[10px] text-amber-500 font-medium">(Estimasi Kas)</span>
+                                @else
+                                    <span class="font-black text-emerald-600">Rp {{ number_format($setoran->harga_dibayar, 0, ',', '.') }}</span>
+                                    <span class="block text-[10px] text-emerald-500">(Sudah Cair)</span>
+                                @endif
+                            </td>
+                            <td class="py-4 px-6 text-center">
+                                @if($setoran->status === 'pending')
+                                    <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 border border-amber-200/50 uppercase tracking-wider text-[10px]">
+                                        Pending
+                                    </span>
+                                @else
+                                    <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 border border-emerald-200/50 uppercase tracking-wider text-[10px]">
+                                        Selesai
+                                    </span>
+                                @endif
+                            </td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="5" class="py-12 text-center text-slate-400 italic font-medium bg-slate-50/40">
+                                Belum ada riwayat aktivitas pengiriman logistik jelantah.
+                            </td>
+                        </tr>
+                    @endforelse
                 </tbody>
             </table>
         </div>
