@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SetoranController; 
+use App\Http\Controllers\StakeholderController; // Pastikan ini diimpor
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
 
@@ -10,10 +11,13 @@ Route::get('/', function () {
 });
 
 // =========================================================================
-// GRUP RUTE KHUSUS YANG SUDAH LOGIN (AUTH) & TERVERIFIKASI
+// GRUP RUTE OPERASIONAL (Wajib Login, Terverifikasi, & SUDAH SET LOKASI)
 // =========================================================================
-Route::middleware(['auth', 'verified'])->group(function () {
+Route::middleware(['auth', 'verified', \App\Http\Middleware\CheckLocationSetup::class])->group(function () {
     
+    // ---------------------------------------------------------------------
+    // PERAN: MASYARAKAT
+    // ---------------------------------------------------------------------
     // 1. Dashboard Utama Warga (Melihat Angka Statistik / Ringkasan)
     Route::get('/masyarakat/dashboard', [SetoranController::class, 'dashboardMasyarakat'])->name('masyarakat.dashboard');
     
@@ -26,8 +30,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/masyarakat/setoran/{id}/edit', [SetoranController::class, 'editMasyarakat'])->name('masyarakat.setoran.edit');
     Route::put('/masyarakat/setoran/{id}', [SetoranController::class, 'updateMasyarakat'])->name('masyarakat.setoran.update');
     Route::delete('/masyarakat/setoran/{id}', [SetoranController::class, 'destroyMasyarakat'])->name('masyarakat.setoran.destroy');
-
-    // Dashboard Pengepul
+    Route::get('/masyarakat/pengepul-terdekat', [App\Http\Controllers\Masyarakat\PengepulController::class, 'index'])
+        ->name('masyarakat.pengepul.terdekat');
+    // ---------------------------------------------------------------------
+    // PERAN: PENGEPUL
+    // ---------------------------------------------------------------------
     Route::get('/pengepul/dashboard', function () {
         if (Auth::user()->role !== 'pengepul') {
             return redirect('/' . Auth::user()->role . '/dashboard');
@@ -35,17 +42,22 @@ Route::middleware(['auth', 'verified'])->group(function () {
         return view('dashboard.pengepul'); 
     })->name('pengepul.dashboard');
 
-    // Dashboard Stakeholder
-    Route::get('/stakeholder/dashboard', function () {
-        if (Auth::user()->role !== 'stakeholder') {
-            return redirect('/' . Auth::user()->role . '/dashboard');
-        }
-        return view('dashboard.stakeholder'); 
-    })->name('stakeholder.dashboard');
-});
+   // ---------------------------------------------------------------------
+    // PERAN: STAKEHOLDER (HEN)
+    // ---------------------------------------------------------------------
+    // 1. Dashboard Utama Eksekutif
+    Route::get('/stakeholder/dashboard', [StakeholderController::class, 'index'])->name('stakeholder.dashboard');
+    
+    // 2. Halaman Log Audit Transaksi Terpisah (Rute yang memicu error sebelumnya)
+    Route::get('/stakeholder/audit-log', [StakeholderController::class, 'auditLog'])->name('stakeholder.audit');
+    
+    // 3. Alur Kendali Mutu Hasil Uji Laboratorium
+    Route::get('/stakeholder/setoran/{id}/lab', [StakeholderController::class, 'editLab'])->name('stakeholder.lab.edit');
+    Route::patch('/stakeholder/setoran/{id}/lab', [StakeholderController::class, 'updateLab'])->name('stakeholder.lab.update');
+    });
 
 // =========================================================================
-// GRUP RUTE BAWAAN UNTUK PENGELOLAAN PROFIL USER
+// GRUP RUTE PROFIL USER (Bebas dari pengecekan lokasi agar bisa update data)
 // =========================================================================
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');

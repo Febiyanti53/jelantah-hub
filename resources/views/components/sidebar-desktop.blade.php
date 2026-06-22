@@ -28,6 +28,19 @@
             <span x-show="sidebarExpanded" x-transition:opacity class="whitespace-nowrap">Dashboard Utama</span>
         </a>
 
+        <!-- Menu Tambahan: Cari Pengepul Terdekat -->
+<a href="{{ route('masyarakat.pengepul.terdekat') }}" 
+   class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-all group {{ request()->routeIs('masyarakat.pengepul.terdekat') ? 'bg-emerald-600/10 text-emerald-400 border border-emerald-500/20 font-semibold' : 'font-medium hover:bg-slate-800 text-slate-400 hover:text-white' }}">
+    <span class="shrink-0 {{ request()->routeIs('masyarakat.pengepul.terdekat') ? 'text-emerald-400' : 'text-slate-400 group-hover:text-white' }}">
+        <!-- Ikon Peta / Navigasi Pin Lokasi -->
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+            <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" />
+        </svg>
+    </span>
+    <span x-show="sidebarExpanded" class="whitespace-nowrap">Cari Pengepul</span>
+</a>
+
         <a href="{{ route('masyarakat.setoran.create') }}" 
            class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-all group {{ request()->routeIs('masyarakat.setoran.create') ? 'bg-emerald-600/10 text-emerald-400 border border-emerald-500/20 font-semibold' : 'font-medium hover:bg-slate-800 text-slate-400 hover:text-white' }}">
             <span class="shrink-0 {{ request()->routeIs('masyarakat.setoran.create') ? 'text-emerald-400' : 'text-slate-400 group-hover:text-white' }}">

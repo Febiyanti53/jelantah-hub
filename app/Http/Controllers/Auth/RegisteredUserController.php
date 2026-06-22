@@ -15,17 +15,12 @@ use Illuminate\View\View;
 
 class RegisteredUserController extends Controller
 {
-    /**
-     * Display the registration view.
-     */
     public function create(): View
     {
         return view('auth.register');
     }
 
     /**
-     * Handle an incoming registration request.
-     *
      * @throws ValidationException
      */
     public function store(Request $request): RedirectResponse
@@ -34,25 +29,30 @@ class RegisteredUserController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
-            
-            // Tambahkan Validasi Role di Sini
             'role' => ['required', 'string', 'in:pengepul,masyarakat'], 
+            
+            // Tambahkan Validasi Koordinat Di Sini
+            'latitude' => ['required', 'numeric', 'between:-90,90'],
+            'longitude' => ['required', 'numeric', 'between:-180,180'],
+            'address' => ['required', 'string', 'max:500'],
         ]);
 
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
-            
-            // Simpan Peran User ke Database
             'role' => $request->role, 
+            
+            // Simpan Data Lokasi ke Database
+            'latitude' => $request->latitude,
+            'longitude' => $request->longitude,
+            'address' => $request->address,
         ]);
 
         event(new Registered($user));
 
         Auth::login($user);
 
-        // Alihkan otomatis sesuai role setelah daftar sukses
         return match ($user->role) {
             'pengepul' => redirect('/pengepul/dashboard'),
             'masyarakat' => redirect('/masyarakat/dashboard'),
